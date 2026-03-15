@@ -69,3 +69,61 @@ Tercer Punto
                 especificada (/home/root) no existe en el sistema, por lo que el antivirus no encontró directorios para revisar. Aun así, el resultado muestra 
                 que el motor antivirus funciona correctamente y está actualizado, lo cual es importante para detectar y prevenir amenazas de malware en el 
                 sistema.
+
+
+Resumen Módulos 3 y 4 – Curso de Ciberseguridad Cisco
+    Introducción
+
+        En este documento se presenta un resumen de los temas vistos en los módulos 3 y 4 del curso de ciberseguridad de Cisco. En estos módulos aprendimos sobre el reconocimiento de sistemas, el análisis de vulnerabilidades y los ataques de ingeniería social que utilizan los atacantes para obtener información o acceder a sistemas.
+
+    Módulo 3 – Reconocimiento y análisis de vulnerabilidades
+        Reconocimiento pasivo
+
+        El reconocimiento pasivo consiste en recopilar información sobre una organización sin interactuar directamente con sus sistemas. Esto se hace usando información pública en internet como registros DNS, redes sociales, certificados SSL o metadatos de archivos.
+        También se utilizan técnicas de OSINT para encontrar información disponible públicamente.
+
+    Reconocimiento activo
+
+        El reconocimiento activo ocurre cuando se interactúa directamente con los sistemas o la red para obtener más información. Por ejemplo, se pueden escanear puertos o identificar servicios que están funcionando en un servidor.
+
+        Una herramienta muy usada para esto es Nmap, que permite analizar redes y encontrar puertos abiertos.
+        También se pueden analizar paquetes de red usando Wireshark o crear paquetes personalizados con Scapy.
+
+    Análisis de vulnerabilidades
+
+        El análisis de vulnerabilidades se utiliza para identificar fallas de seguridad en sistemas, redes o aplicaciones. Esto se hace con herramientas automáticas que revisan configuraciones y versiones de software para detectar posibles riesgos.
+
+        Un problema común de estos análisis es que pueden generar falsos positivos o no detectar algunas vulnerabilidades.
+
+Módulo 4 – Ingeniería social
+    Ingeniería social
+
+        La ingeniería social es una técnica que utilizan los atacantes para engañar a las personas y obtener información confidencial. En lugar de atacar directamente el sistema, aprovechan la confianza o el error humano.
+
+    Tipos de ataques
+        Phishing
+        Consiste en enviar correos falsos que parecen venir de bancos o empresas para robar contraseñas o información personal.
+
+        Vishing
+        Es parecido al phishing pero se hace por medio de llamadas telefónicas.
+
+        Smishing
+        Es un ataque que utiliza mensajes de texto o SMS para engañar a las personas.
+        
+        Ataques físicos
+        También existen ataques físicos como:
+
+        Tailgating: entrar a un lugar restringido siguiendo a alguien autorizado.
+
+        Dumpster diving: buscar información en la basura.
+
+        Shoulder surfing: observar la pantalla o teclado de otra persona para ver contraseñas.
+
+        Herramientas de ingeniería social
+
+        Existen herramientas que se usan en pruebas de seguridad para simular estos ataques, por ejemplo:
+
+    Social-Engineer Toolkit, que permite crear ataques de phishing y otras pruebas de ingeniería social.
+
+    BeEF, que se usa para analizar vulnerabilidades en navegadores web.
+
