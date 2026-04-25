@@ -203,3 +203,187 @@ Esta sección recopila errores comunes de los desarrolladores: dejar comentarios
 Lo que más me llevo de estos cuatro módulos es que un ataque real sigue un proceso: primero se hace reconocimiento (pasivo y activo), luego se buscan vulnerabilidades, se puede usar ingeniería social para obtener acceso inicial, y después se explotan las fallas encontradas en la red o en las aplicaciones web.
 
 La seguridad tiene que ser por capas. No basta con un firewall o un antivirus, hay que proteger desde la red física hasta la lógica de la aplicación. También me quedó claro que muchos ataques se basan en lo mismo: falta de validación de entradas, configuraciones por defecto que nadie cambia, y sobre todo, el factor humano que sigue siendo el eslabón más débil.
+
+
+Módulo 7: Seguridad en la Nube, Dispositivos Móviles e IoT
+Ataques en la nube
+Este módulo se enfoca en lo que pasa cuando el objetivo no es un servidor físico sino infraestructura en la nube (AWS, Azure, GCP). El cambio de mentalidad importante es que en la nube tú no controlas el hardware, controlas configuraciones — y ahí es donde están la mayoría de las fallas.
+Los ataques más comunes que vimos:
+
+Credenciales expuestas: keys de AWS o tokens que terminan en repos públicos de GitHub. Hay bots que escanean GitHub 24/7 buscando esto. Una vez que un atacante tiene una key con permisos amplios, básicamente ya entró.
+Buckets S3 mal configurados: cubos de almacenamiento que se dejan públicos por error y exponen datos sensibles. Es uno de los errores más típicos.
+IAM mal configurado: dar más permisos de los necesarios. Si una función Lambda tiene permisos de admin, cualquier vulnerabilidad en esa función se convierte en un compromiso total.
+Metadata service abuse: en AWS, la URL 169.254.169.254 da acceso a credenciales temporales de la instancia. Si hay un SSRF en una app que corre en EC2, el atacante puede sacar esas credenciales desde ahí.
+Account takeover: secuestrar la cuenta del proveedor cloud, normalmente por phishing al admin o por reutilización de contraseñas.
+
+También vimos el modelo de responsabilidad compartida, que básicamente dice que el proveedor (AWS, por ejemplo) se encarga de la seguridad de la infraestructura, pero la seguridad en la nube (configuraciones, datos, accesos) es responsabilidad del cliente. Mucha gente no entiende esto y asume que AWS los protege de todo.
+Ataques a dispositivos móviles
+En móviles los ataques se dividen en Android e iOS, pero los vectores son parecidos:
+
+Apps maliciosas: aplicaciones que parecen legítimas pero piden permisos excesivos o tienen funcionalidad oculta. En Android es más común porque se pueden instalar APKs fuera de la Play Store.
+Jailbreak/Root: cuando el usuario rompe las restricciones del sistema operativo, también rompe muchas de las protecciones de seguridad.
+Almacenamiento inseguro: muchas apps guardan tokens, contraseñas o datos sensibles sin cifrar en el dispositivo.
+Comunicación insegura: apps que no usan HTTPS o que no validan correctamente los certificados (SSL pinning mal implementado o ausente).
+Ingeniería inversa: con herramientas como APKTool o Frida se puede descompilar una app, modificarla y volverla a empaquetar. Esto se usa para saltar validaciones, ver cómo funcionan APIs internas, etc.
+
+El OWASP Mobile Top 10 es el equivalente del OWASP Top 10 pero específico para móviles. Cubre cosas como uso indebido de plataformas, almacenamiento inseguro, autenticación débil, etc.
+IoT (Internet de las Cosas)
+El IoT es probablemente el área más vulnerable de todas. La razón es simple: muchos dispositivos IoT se diseñan pensando en costos y funcionalidad, no en seguridad. Cosas como cámaras IP, termostatos, electrodomésticos inteligentes, equipos médicos, etc.
+Problemas típicos:
+
+Credenciales por defecto que nadie cambia (admin/admin, root/root). Esto es exactamente cómo se construyó la botnet Mirai, que tumbó medio internet en 2016.
+Firmware sin actualizaciones: muchos fabricantes ni siquiera publican parches, y si los publican, los usuarios no los aplican.
+Protocolos inseguros: muchos dispositivos usan MQTT, CoAP o protocolos propietarios sin cifrado.
+Interfaces de gestión expuestas: paneles web accesibles desde internet sin autenticación robusta.
+Falta de cifrado en comunicaciones: la información viaja en texto plano entre el dispositivo y la nube del fabricante.
+
+También vimos ataques a sistemas especializados como SCADA y entornos industriales (OT), donde las consecuencias de un ataque pueden ser físicas — apagar una planta, dañar maquinaria, etc.
+
+Módulo 8: Realización de técnicas posteriores a la explotación
+Este módulo es el "qué hago después de que ya entré". Conseguir el acceso inicial es solo el primer paso — los atacantes serios después se establecen, se mueven lateralmente y mantienen el acceso a largo plazo.
+Establecer un punto de apoyo (foothold)
+Una vez que tienes acceso a una máquina, lo primero es asegurarte de que ese acceso no se va a perder. Algunas técnicas:
+
+Reverse shells: en vez de que tú te conectes a la víctima (lo que sería bloqueado por firewalls), haces que la víctima se conecte a ti. Herramientas como netcat, Metasploit o scripts en Python/Bash sirven para esto.
+Bind shells: lo contrario, abrir un puerto en la víctima al que tú te conectas. Más fácil de detectar pero útil en algunos escenarios.
+Web shells: subir un archivo (PHP, ASP, JSP) a un servidor web comprometido que te da una interfaz para ejecutar comandos. Cosas como c99 o WSO son clásicos.
+
+Mantener persistencia
+La persistencia es asegurarte de seguir teniendo acceso aunque la máquina se reinicie o el usuario cambie su contraseña. Métodos típicos:
+
+Tareas programadas (cron en Linux, scheduled tasks en Windows) que ejecutan tu payload cada cierto tiempo.
+Servicios maliciosos: crear un servicio que arranque con el sistema.
+Modificación del registro en Windows (claves Run, RunOnce) para ejecutar algo al iniciar sesión.
+Backdoors en archivos legítimos: modificar binarios o scripts que se ejecutan normalmente.
+Cuentas nuevas: crear usuarios con privilegios para tener un acceso "limpio" si se descubre el original.
+Llaves SSH: agregar tu llave pública al authorized_keys del servidor.
+
+Escalada de privilegios
+Casi nunca entras como administrador. Lo normal es entrar como un usuario con pocos permisos y de ahí escalar a root/SYSTEM.
+En Linux:
+
+Buscar binarios SUID mal configurados (con find / -perm -u=s -type f 2>/dev/null)
+Explotar el archivo sudoers mal configurado
+Aprovechar tareas cron con permisos incorrectos
+Explotar kernel exploits si la versión es vulnerable
+Herramientas como LinPEAS o linux-exploit-suggester automatizan mucho esto
+
+En Windows:
+
+Buscar servicios con permisos débiles
+Token impersonation (con Mimikatz, por ejemplo)
+DLL hijacking
+Unquoted service paths
+Herramientas como WinPEAS o PowerUp ayudan a enumerar todo esto
+
+Movimiento lateral
+Una vez que tienes privilegios en una máquina, casi siempre quieres llegar a otras. Eso es movimiento lateral.
+
+Pass-the-Hash: ya lo vimos en el módulo 5, pero aquí toma sentido completo. Con el hash de un admin de dominio puedes autenticarte en cualquier máquina del dominio.
+Pass-the-Ticket: similar pero con tickets de Kerberos.
+PsExec / WMI / WinRM: ejecutar comandos remotamente en otras máquinas del dominio.
+RDP: conectarse por escritorio remoto si tienes credenciales.
+SSH pivoting: usar una máquina comprometida como puente para llegar a otras redes.
+
+Evitar detección
+Todo esto no sirve si te detectan rápido. Las técnicas anti-forenses incluyen:
+
+Borrar logs: limpiar /var/log/ en Linux o los Event Logs en Windows.
+Timestomping: modificar las fechas de los archivos para que no parezcan recientes.
+Living off the land (LOTL): usar herramientas que ya están en el sistema (PowerShell, certutil, bitsadmin, etc.) en vez de subir binarios nuevos. Así no levantas alarmas en el antivirus.
+Ofuscación: codificar payloads en base64, comprimir scripts, usar nombres aleatorios.
+Evadir EDRs: técnicas más avanzadas para saltarse los sistemas de detección modernos.
+
+Enumeración interna
+Una vez dentro, se hace una enumeración mucho más profunda que la del reconocimiento inicial: usuarios del dominio, grupos, políticas, recursos compartidos, máquinas, servidores de bases de datos, etc. Herramientas como BloodHound mapean toda la red de Active Directory y muestran rutas de ataque que no son obvias a simple vista.
+
+Módulo 9: Informes y comunicación
+Este módulo cambia el chip completamente. Ya no es sobre cómo hackear, es sobre cómo contar lo que hackeaste de una forma que sea útil para el cliente. Algo que me quedó claro es que un pentest mal reportado es básicamente un pentest perdido — si nadie entiende los hallazgos, nadie los va a arreglar.
+Componentes de un informe
+Un informe profesional de pentesting suele tener:
+
+Resumen ejecutivo: para los gerentes y la directiva. Sin tecnicismos. Explica el riesgo en términos de negocio (¿qué pasaría si esto se explota? ¿cuánto puede costar?). Una página máximo.
+Alcance y metodología: qué se probó, qué no, cuándo, con qué herramientas y bajo qué reglas.
+Hallazgos detallados: cada vulnerabilidad encontrada, con su descripción técnica, evidencia (capturas, comandos), nivel de riesgo y recomendación de mitigación.
+Calificación de severidad: usando estándares como CVSS (Common Vulnerability Scoring System) que da una puntuación de 0 a 10 según el impacto.
+Recomendaciones: qué hacer para arreglar cada problema, idealmente priorizadas por riesgo.
+Conclusiones: postura general de seguridad de la organización.
+Anexos: logs, listados completos, evidencia adicional.
+
+Análisis de hallazgos
+Un buen informe no solo lista vulnerabilidades. Las analiza. Por ejemplo, encontrar un SQL injection es un hallazgo, pero analizarlo sería decir: "esta vulnerabilidad permite acceder a la base de datos de clientes, que contiene 50.000 registros con información personal, lo que viola la ley de protección de datos y puede resultar en multas".
+La priorización importa mucho. No todo es crítico. Hay que distinguir entre:
+
+Crítico: explotación inmediata con impacto grave (ej. RCE en servidor de producción)
+Alto: vulnerabilidad seria pero requiere algunas condiciones
+Medio: explotable pero con impacto limitado
+Bajo: información o configuraciones débiles que ayudarían a otros ataques
+Informativo: cosas que no son vulnerabilidades pero conviene mencionar
+
+Comunicación durante el pentest
+La comunicación no empieza ni termina con el informe. Durante el pentest hay que:
+
+Tener un contacto claro del lado del cliente para emergencias.
+Reportar inmediatamente si encuentras algo crítico (datos expuestos en producción, brechas activas, etc.) — no esperes al informe final.
+Mantener al cliente informado del progreso, sobre todo en pentests largos.
+Documentar todo mientras ocurre, no después. Capturas, comandos, fechas, hashes — todo.
+
+Actividades post-entrega
+Después de entregar el informe el trabajo no se acaba:
+
+Reunión de cierre: presentar los hallazgos al cliente, explicar lo más importante en persona.
+Re-test: volver a probar después de que el cliente arregle las cosas, para confirmar que las correcciones funcionan.
+Lecciones aprendidas: documentar internamente qué funcionó y qué no para mejorar futuros pentests.
+Limpieza: eliminar herramientas, accesos, cuentas creadas durante el pentest. No dejar puertas abiertas.
+
+Aspectos legales y éticos
+Algo que se enfatiza mucho es la importancia del contrato y autorización por escrito. Sin un documento firmado que defina claramente el alcance, lo que estás haciendo deja de ser pentesting y empieza a ser un delito. La regla básica es: si no está autorizado, no lo toques.
+
+Módulo 10: Herramientas y análisis de código
+Este último módulo es como la caja de herramientas y un poco de programación aplicada al pentesting.
+Conceptos básicos de scripting
+No necesitas ser desarrollador para hacer pentesting, pero sí conviene saber leer y escribir scripts. Los lenguajes más útiles:
+
+Python: probablemente el más usado. Sirve para casi todo: automatizar escaneos, escribir exploits, parsear salidas, manipular paquetes con Scapy, interactuar con APIs.
+Bash: indispensable para Linux. Encadenar comandos, automatizar tareas repetitivas, post-explotación.
+PowerShell: el equivalente en Windows. Muy potente para movimiento lateral y enumeración en entornos Active Directory. Frameworks como PowerSploit o Empire se basan en esto.
+Ruby: lo usa Metasploit internamente.
+JavaScript: necesario para entender XSS y ataques del lado del cliente.
+
+Análisis de código de explotación
+Una habilidad importante es saber leer un exploit antes de ejecutarlo. Hay varias razones:
+
+Seguridad: muchos "exploits" en internet en realidad son backdoors disfrazados que comprometen tu propia máquina cuando los ejecutas.
+Adaptación: rara vez un exploit funciona tal cual. Casi siempre hay que ajustar IPs, puertos, payloads, encoding, etc.
+Aprendizaje: entender cómo funciona un exploit te enseña sobre la vulnerabilidad subyacente.
+
+Cuando se analiza código de explotación se busca:
+
+Qué vulnerabilidad explota (CVE específico)
+Cómo construye el payload
+Qué condiciones requiere
+Si tiene comportamiento sospechoso o conexiones a hosts desconocidos
+
+Categorías de herramientas
+El módulo organiza las herramientas por categoría según en qué fase del pentest se usan:
+Reconocimiento y OSINT: Maltego, Recon-ng, theHarvester, Shodan, Spiderfoot.
+Escaneo de red: Nmap, Masscan, Zmap.
+Análisis de vulnerabilidades: Nessus, OpenVAS/GVM, Nikto, OWASP ZAP.
+Explotación: Metasploit Framework, ExploitDB, searchsploit.
+Aplicaciones web: Burp Suite, OWASP ZAP, SQLMap, Gobuster, ffuf, dirb.
+Cracking de contraseñas: John the Ripper, Hashcat, Hydra, Medusa.
+Inalámbrico: Aircrack-ng, Kismet, Wifite, Reaver.
+Post-explotación: Mimikatz, BloodHound, Empire, PowerSploit, LinPEAS, WinPEAS.
+Análisis forense y debugging: Wireshark, Ghidra, IDA, radare2.
+Frameworks completos: Cobalt Strike (comercial), Metasploit (open source), Sliver.
+Distribuciones especializadas
+En vez de instalar todo a mano, hay distribuciones de Linux que ya vienen con todo el arsenal listo:
+
+Kali Linux: la más popular. Mantenida por Offensive Security.
+Parrot OS: alternativa más ligera y con enfoque en privacidad.
+BlackArch: basada en Arch, con muchísimas herramientas.
+
+Para defensa también hay distribuciones como Security Onion o REMnux (esta última específica para análisis de malware).
+Conclusión personal del módulo
+Lo que entendí es que las herramientas son solo eso, herramientas. No te hacen pentester por sí solas. Lo importante es entender qué hace cada una, cuándo usarla y cómo interpretar lo que te devuelve. Una persona que solo aprende a apretar botones en Metasploit no va a llegar muy lejos cuando algo no funcione, porque no va a entender por qué.
+También me quedó claro que el scripting es lo que separa a un pentester básico de uno bueno. Saber automatizar tus propios procesos, escribir tus propios exploits o adaptar los existentes es lo que marca la diferencia.
